@@ -1,0 +1,863 @@
+<h1>Build a Personal AI Assistant on Discord — It Hears You, Talks Back, and Gets Things Done 🎙️🤖</h1>
+<blockquote>
+<p>An in-depth guide from <strong>actually building this in one night</strong> — an AI assistant living in your own Discord:
+chat with it by text, have it sit in your voice channel and listen, transcribe spoken Thai to text, <strong>talk back out loud</strong>,
+answer questions on its own in ~10 seconds, and forward the big jobs to your main AI</p>
+<p>Written so <strong>a human can follow along</strong> and so <strong>an AI (like Claude Code) can build the whole system for you</strong> — there&#39;s a ready-made Mega-Prompt at the end</p>
+</blockquote>
+<hr>
+<h2>System Overview</h2>
+<pre><code>You speak in a Discord voice channel
+        │
+        ▼
+[Ears] The bot sits in the voice channel, capturing audio per speaker
+        │  (cuts a segment after 0.7s of silence + merges back-to-back segments into one sentence)
+        ▼
+[Transcribe] Whisper runs on your own machine (your audio never leaves home)
+        │
+        ▼
+[Fast brain] A small AI answers in ~5-10s ──── Big task? ──► [Main brain] The full AI (Claude Code)
+        │                                                    actually does the work, then reports back
+        ▼
+[Mouth] Converts the answer to speech, plays it into the voice channel + posts the text in chat
+</code></pre>
+<p><strong>The single most important principle of this system</strong> (earned through real scars):</p>
+<ul>
+<li>🧠 The fast brain&#39;s only job is to &quot;talk&quot; — <strong>it has no hands, must never act on its own, and must never claim it did something</strong></li>
+<li>👑 Every task that needs real action gets forwarded to one main brain</li>
+<li>🔍 Trust only verifiable results (the file actually exists, the process is actually running) — belief ≠ evidence</li>
+</ul>
+<hr>
+<h2>What You Need</h2>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>What it&#39;s for</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Any</strong> machine that can stay on</td>
+<td>Runs the bot</td>
+<td>See the &quot;Pick a home for your bot&quot; table below</td>
+</tr>
+<tr>
+<td>A Discord account + your own server</td>
+<td>The bot&#39;s home</td>
+<td>Free</td>
+</tr>
+<tr>
+<td>Discord Bot Token</td>
+<td>The bot&#39;s identity</td>
+<td>Create for free at the developer portal</td>
+</tr>
+<tr>
+<td>Node.js 20+</td>
+<td>Runs the bot itself</td>
+<td>mac: <code>brew install node</code> / ubuntu: <code>apt install nodejs npm</code> or nvm</td>
+</tr>
+<tr>
+<td>ffmpeg + whisper.cpp</td>
+<td>Audio conversion + transcription</td>
+<td>mac: <code>brew install ffmpeg whisper-cpp</code> / ubuntu: <code>apt install ffmpeg</code> + build whisper.cpp from github (5 minutes)</td>
+</tr>
+<tr>
+<td>Python 3</td>
+<td>Speech output (edge-tts)</td>
+<td>Already on your machine</td>
+</tr>
+<tr>
+<td>An AI CLI <strong>from any vendor</strong></td>
+<td>Fast brain + main brain</td>
+<td>See the brain-picking table below</td>
+</tr>
+</tbody></table>
+<h3>Pick a Home for Your Bot — Any Machine Works</h3>
+<p>Key fact: <strong>the bot never touches the mic/speakers of the machine it runs on</strong> — all audio in and out travels over Discord&#39;s network.
+So a headless box like a VPS runs it at full capability:</p>
+<table>
+<thead>
+<tr>
+<th>Home</th>
+<th>Pros</th>
+<th>Things to know</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Old PC/laptop at home</td>
+<td>Free, uses what you have, data stays with you</td>
+<td>Draws more power than a mini PC, must stay on</td>
+</tr>
+<tr>
+<td>Mini PC / Mac mini / NUC</td>
+<td>Quiet, power-efficient, set-and-forget</td>
+<td>Upfront hardware cost</td>
+</tr>
+<tr>
+<td><strong>VPS / rented server</strong></td>
+<td>Nothing running at home, stable network, starts at a few dollars/month</td>
+<td>Size the specs to the ears: whisper turbo wants ~4GB+ RAM — on a weak CPU use the medium/small model or cloud STT instead; your audio gets transcribed on a rented box (privacy-serious folks, weigh that)</td>
+</tr>
+<tr>
+<td>Server with a GPU</td>
+<td>Fastest transcription, can run big Ollama brains</td>
+<td>Overkill for a single user</td>
+</tr>
+</tbody></table>
+<p>The commands in this guide are written mac-style (<code>brew</code>) because that&#39;s the machine we built on —
+Ubuntu/Debian folks can swap in <code>apt</code> almost everywhere, and every piece (node, ffmpeg, whisper.cpp, edge-tts) exists on every OS</p>
+<hr>
+<h2>Pick Any Brain You Like — No Vendor Lock-In</h2>
+<p>The heart of the system, the &quot;fast brain&quot;, is just <strong>a one-line CLI call</strong>: text in → text out.
+Switching AI vendors is literally a one-line change:</p>
+<table>
+<thead>
+<tr>
+<th>Brain</th>
+<th>Drop-in command</th>
+<th>Strength</th>
+<th>Cost</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Claude Code</strong></td>
+<td><code>claude -p &quot;&lt;prompt&gt;&quot; --model claude-haiku-4-5 --tools &quot;&quot;</code></td>
+<td>Smart, great Thai answers, has a hands-off flag</td>
+<td>Per subscription/API</td>
+</tr>
+<tr>
+<td><strong>OpenAI Codex CLI</strong></td>
+<td><code>codex exec &quot;&lt;prompt&gt;&quot;</code></td>
+<td>Convenient if you already use ChatGPT</td>
+<td>Per subscription</td>
+</tr>
+<tr>
+<td><strong>Gemini CLI</strong></td>
+<td><code>gemini -p &quot;&lt;prompt&gt;&quot;</code></td>
+<td>Generous free tier</td>
+<td>Free/per quota</td>
+</tr>
+<tr>
+<td><strong>Ollama (local)</strong></td>
+<td><code>ollama run llama3.2 &quot;&lt;prompt&gt;&quot;</code></td>
+<td><strong>100% free + offline + data never leaves your machine</strong></td>
+<td>Free</td>
+</tr>
+<tr>
+<td><strong>Direct API</strong></td>
+<td><code>curl</code> to your vendor&#39;s endpoint</td>
+<td>Finest-grained control</td>
+<td>Per token</td>
+</tr>
+</tbody></table>
+<p>In code, just make the brain command a config value:</p>
+<pre><code class="language-js">// env BRAIN_CMD, e.g.:
+//   claude -p {PROMPT} --model claude-haiku-4-5 --tools &quot;&quot;
+//   ollama run llama3.2 {PROMPT}
+//   gemini -p {PROMPT}
+const BRAIN_CMD = process.env.BRAIN_CMD || &#39;claude -p {PROMPT} --model claude-haiku-4-5 --tools &quot;&quot;&#39;
+</code></pre>
+<blockquote>
+<p>⚠️ The one thing that is <strong>not flexible</strong>: whichever brain you pick, always enforce two things —
+(1) the fast brain gets no tools / never touches the system, and (2) the prompt must forbid it from claiming &quot;done&quot;.
+This isn&#39;t a matter of taste — it&#39;s a real scar: a brain with hands once quietly opened 4 random windows
+and reported &quot;I&#39;ve opened tab 18 for you&quot; when no tab 18 ever existed 😅</p>
+</blockquote>
+<p>The <strong>ears (transcription)</strong> and the <strong>mouth (speech)</strong> are swappable too:</p>
+<table>
+<thead>
+<tr>
+<th>Piece</th>
+<th>Option</th>
+<th>Best for</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Ears</td>
+<td>whisper.cpp (this guide)</td>
+<td>Everyone — free, on-device</td>
+</tr>
+<tr>
+<td>Ears</td>
+<td>mlx-whisper + Thai-tuned model</td>
+<td>Apple silicon + maximum Thai accuracy</td>
+</tr>
+<tr>
+<td>Ears</td>
+<td>faster-whisper (Python)</td>
+<td>Python folks / NVIDIA GPU</td>
+</tr>
+<tr>
+<td>Ears</td>
+<td>Cloud STT (OpenAI/Google)</td>
+<td>Don&#39;t want to babysit a model (audio <em>leaves your machine</em>)</td>
+</tr>
+<tr>
+<td>Mouth</td>
+<td>edge-tts (this guide)</td>
+<td>Free, natural Thai voices</td>
+</tr>
+<tr>
+<td>Mouth</td>
+<td><code>say</code> (macOS) / <code>espeak-ng</code> (Linux)</td>
+<td>Fully offline (a bit robotic)</td>
+</tr>
+<tr>
+<td>Mouth</td>
+<td>ElevenLabs / OpenAI TTS</td>
+<td>Most human-like voices (paid)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Part 1 — Create the Discord Bot</h2>
+<h3>1.1 Create the Application + Bot</h3>
+<ol>
+<li>Go to <a href="https://discord.com/developers/applications">https://discord.com/developers/applications</a> → <strong>New Application</strong>, name your assistant</li>
+<li><strong>Bot</strong> menu → Reset Token → <strong>save the token</strong> (you only see it once!)</li>
+<li>Enable the <strong>Privileged Gateway Intents</strong>: <code>MESSAGE CONTENT INTENT</code> (and <code>SERVER MEMBERS</code> if you want nicknames)</li>
+<li><strong>OAuth2 → URL Generator</strong> menu: pick scope <code>bot</code> + permissions <code>View Channels, Send Messages, Connect, Speak</code></li>
+<li>Open the generated URL → invite the bot into your server</li>
+</ol>
+<h3>1.2 Store the token safely</h3>
+<pre><code class="language-bash">mkdir -p ~/.config/my-assistant
+cat &gt; ~/.config/my-assistant/.env &lt;&lt; &#39;EOF&#39;
+DISCORD_BOT_TOKEN=paste_your_token_here
+EOF
+chmod 600 ~/.config/my-assistant/.env
+</code></pre>
+<p>⚠️ <strong>Never, ever commit the token to git</strong> — always put <code>.env</code> in <code>.gitignore</code></p>
+<h3>1.3 Get your channel IDs</h3>
+<p>Open Discord → Settings → Advanced → enable <strong>Developer Mode</strong> → right-click the voice/text channel → <strong>Copy Channel ID</strong>. Keep both.</p>
+<hr>
+<h2>Part 2 — Project and Core Code</h2>
+<h3>2.1 Set up the project</h3>
+<pre><code class="language-bash">mkdir -p ~/my-assistant/voice &amp;&amp; cd ~/my-assistant/voice
+npm init -y &amp;&amp; npm pkg set type=module
+npm install discord.js @discordjs/voice@^0.19.2 @snazzah/davey @discordjs/opus prism-media libsodium-wrappers
+</code></pre>
+<blockquote>
+<p>⚠️ <strong>The biggest trap of the year</strong>: Discord now enforces its new voice encryption (DAVE E2EE).
+If you&#39;re on <code>@discordjs/voice</code> below 0.19 or forget to install <code>@snazzah/davey</code>,
+the bot simply cannot connect to voice — the symptom is looping <code>signalling → connecting</code> then a 30s timeout
+with zero explanation (we lost a long time hunting this one).</p>
+</blockquote>
+<h3>2.2 Download the transcription models</h3>
+<pre><code class="language-bash">mkdir -p ~/models/whisper
+# Main model — fast, very accurate, supports Thai (1.6GB)
+curl -L -o ~/models/whisper/ggml-large-v3-turbo.bin \
+  https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin
+# Silence/noise filter (VAD — 1MB)
+curl -L -o ~/models/whisper/ggml-silero-v5.1.2.bin \
+  https://huggingface.co/ggml-org/whisper-vad/resolve/main/ggml-silero-v5.1.2.bin
+</code></pre>
+<blockquote>
+<p>💡 If you&#39;re all-in on Thai and have an Apple chip: try the <strong>Thonburian Whisper MLX version</strong>
+(<code>pip install mlx-whisper</code> + the <code>tawankri/distill-thonburian-whisper-large-v3-mlx</code> model)
+It transcribes Thai more accurately, especially fast speech — but turbo is plenty to start with</p>
+</blockquote>
+<h3>2.3 Speech output (the mouth)</h3>
+<pre><code class="language-bash">python3 -m venv ~/my-assistant/tts-venv
+~/my-assistant/tts-venv/bin/pip install edge-tts
+# Test it — natural Thai voices from Microsoft (male: Niwat / female: Premwadee)
+~/my-assistant/tts-venv/bin/edge-tts --voice th-TH-NiwatNeural \
+  --text &quot;Hello, I am your assistant&quot; --write-media /tmp/test.mp3
+</code></pre>
+<blockquote>
+<p>A privacy note: edge-tts sends &quot;the text the bot is about to say&quot; to Microsoft to synthesize the audio,
+but <strong>your own voice is transcribed 100% on-device</strong> and goes nowhere — if you need fully offline: macOS use <code>say -v Kanya</code>, Linux use <code>espeak-ng -v th</code> or another local TTS (more robotic-sounding)</p>
+</blockquote>
+<h3>2.4 Core code <code>listen-voice.mjs</code></h3>
+<p>The full code is long — here&#39;s the heart of each section (let your AI assemble the complete file from the Mega-Prompt at the end):</p>
+<pre><code class="language-js">// ── Join the voice channel ──
+const connection = joinVoiceChannel({
+  channelId: voiceChannel.id,
+  guildId: voiceChannel.guild.id,
+  adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+  selfDeaf: false,   // ears open
+  selfMute: false,   // mouth open (for talking back)
+})
+
+// ── Capture audio per speaker — cut after 0.7s of silence ──
+const opusStream = connection.receiver.subscribe(userId, {
+  end: { behavior: EndBehaviorType.AfterSilence, duration: 700 },
+})
+// opus → PCM → ffmpeg (boost quiet audio + cut noise) → WAV 16kHz mono → whisper
+
+// ── The segment merger (critically important!) ──
+// Cutting audio fast = fast replies, but sentences arrive chopped into pieces
+// Fix: any segment arriving within 1s gets &quot;stitched&quot; onto the previous one before going to the brain
+// Bonus: while waiting for the next segment, whisper transcribes the first one in parallel — fast AND complete
+
+// ── Fast brain — no hands allowed! ──
+const { stdout } = await execFileP(&#39;claude&#39;,
+  [&#39;-p&#39;, prompt, &#39;--model&#39;, &#39;claude-haiku-4-5&#39;, &#39;--tools&#39;, &#39;&#39;],  // --tools &quot;&quot; = cut off the hands
+  { timeout: 60_000 })
+// The prompt is explicit: &quot;You have no hands. You cannot do anything yourself. Never claim you did.
+//   Tasks needing action → acknowledge briefly, then write FORWARD as the last line&quot;
+// If FORWARD appears → relay the message to the main AI (tmux pane / another session) to actually do it
+
+// ── Mouth ──
+await execFileP(EDGE_TTS, [&#39;--voice&#39;, &#39;th-TH-NiwatNeural&#39;, &#39;--text&#39;, reply, &#39;--write-media&#39;, f])
+player.play(createAudioResource(f))   // play into the voice channel
+</code></pre>
+<h3>2.5 The supervisor — a self-healing system</h3>
+<pre><code class="language-bash">cat &gt; run-voice.sh &lt;&lt; &#39;EOF&#39;
+#!/bin/zsh
+cd &quot;$(dirname &quot;$0&quot;)&quot;
+while true; do
+  node listen-voice.mjs &quot;$1&quot; &quot;$2&quot; 2&gt;&amp;1 | tee -a /tmp/assistant-voice.log
+  echo &quot;[supervisor] restarting in 3s&quot; | tee -a /tmp/assistant-voice.log
+  sleep 3
+done
+EOF
+chmod +x run-voice.sh
+./run-voice.sh &lt;VOICE_CHANNEL_ID&gt; &lt;TEXT_CHANNEL_ID&gt;
+</code></pre>
+<p>In the code, detect a &quot;voice reconnect&quot; and <code>process.exit(86)</code> —
+the supervisor brings the bot back fresh within 3 seconds</p>
+<hr>
+<h2>Part 3 — Chat and Command by Text (same bot — no second bot needed!)</h2>
+<p>Good news: <strong>no new bot required</strong> — the same bot sitting in the voice channel can receive typed messages too.
+Just add a <code>messageCreate</code> event to the same file and feed it into the <strong>same brain with the same chat history</strong> —
+type a follow-up to something you said out loud, or speak a follow-up to something you typed. It truly is one assistant.</p>
+<h3>3.1 Add the intents</h3>
+<p>When creating the client, add the message intents (and enable MESSAGE CONTENT INTENT in the dev portal per Part 1.1):</p>
+<pre><code class="language-js">const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.GuildMessages,    // ← add
+    GatewayIntentBits.MessageContent,   // ← add
+  ],
+})
+</code></pre>
+<h3>3.2 Messages → the same brain</h3>
+<pre><code class="language-js">const ALLOWED_USERS = new Set((process.env.ALLOWED_USERS || &#39;&#39;).split(&#39;,&#39;))
+
+client.on(&#39;messageCreate&#39;, async (msg) =&gt; {
+  if (msg.author.bot) return                          // keep the bot from talking to itself (loop hell!)
+  if (msg.channel.id !== textChannelId) return        // only listen in the designated channel
+  if (!ALLOWED_USERS.has(msg.author.id)) return       // allowlist — who may command the bot
+
+  const member = msg.author.globalName || msg.author.username
+  // into the same fast brain, same history — respondQuick answers + FORWARDs big tasks exactly like voice
+  respondQuick(member, msg.content).catch(console.error)
+})
+</code></pre>
+<p>That&#39;s it — because we designed <code>respondQuick()</code> as the single entry point: voice calls it, text calls it</p>
+<h3>3.3 Extra tricks on the text side</h3>
+<pre><code class="language-js">// also speak the answer if the typer is currently in the voice channel (feels seamless)
+const inVoice = msg.member?.voice?.channelId === voiceChannelId
+if (inVoice) ttsQueue.push({ text: reply, voice: EDGE_VOICE })
+
+// accept attachments (images/documents) — download them for the main brain to use
+if (msg.attachments.size) {
+  for (const att of msg.attachments.values()) {
+    // att.url is directly downloadable — pass the path/url along in the FORWARD
+  }
+}
+
+// respond only when mentioned (for busy channels)
+if (!msg.mentions.has(client.user)) return
+</code></pre>
+<h3>Voice vs Text — when to use which</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>🎙️ Voice</th>
+<th>⌨️ Text</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Best for</td>
+<td>quick commands, hands busy, casual chat</td>
+<td>long/complex commands, pasting code/links, silent commands from your phone</td>
+</tr>
+<tr>
+<td>Accuracy</td>
+<td>depends on mic + transcription</td>
+<td>100% as typed</td>
+</tr>
+<tr>
+<td>Audit trail</td>
+<td>the transcript the bot posts</td>
+<td>the message itself</td>
+</tr>
+</tbody></table>
+<p>What we actually do: switch back and forth constantly — speak when testing the system or giving short commands, type for detailed instructions or sending links/images</p>
+<hr>
+<h2>Real Traps We Hit (tuition already paid on your behalf 😅)</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Can&#39;t connect to voice, loops on connecting</td>
+<td>Discord enforcing DAVE E2EE</td>
+<td><code>@discordjs/voice</code> ≥0.19 + <code>@snazzah/davey</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td>Bot deaf in the morning, process still alive</td>
+<td>overnight voice reconnect silently kills the receiver</td>
+<td>detect reconnect → self-restart + supervisor</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Transcript comes out as a looping word (&quot;la la la&quot;)</td>
+<td>whisper hallucinating on quiet/short audio</td>
+<td>VAD + ffmpeg loudnorm + <code>--max-context 0</code> + repeated-word filter</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Long sentences get chopped into pieces</td>
+<td>breathing pauses &gt; silence threshold</td>
+<td><strong>the segment merger</strong> (don&#39;t fix by only raising silence — it gets slow)</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Fast brain lies: &quot;done / opened the tab&quot;</td>
+<td>LLM has tools + wasn&#39;t forbidden to claim</td>
+<td><code>--tools &quot;&quot;</code> + no-claims persona + FORWARD only</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Sentences spoken while the bot is transcribing vanish</td>
+<td>ears closed during processing</td>
+<td>release the ears back to listening the moment recording ends (transcribe async)</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Restart loops forever</td>
+<td>counting <code>ready→ready</code> as a reconnect</td>
+<td>only count genuine non-ready → ready</td>
+</tr>
+<tr>
+<td>8</td>
+<td>curl to localhost hangs</td>
+<td>a local proxy intercepting</td>
+<td><code>curl --noproxy &#39;*&#39;</code> (Node fetch is unaffected)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Our Defaults — Starting Points, <strong>Not Rules</strong></h2>
+<p>These values come from real testing against <em>our</em> speech rhythm — speaking pace, room noise, and personal impatience differ for everyone. Treat them as a starting point and tune your own:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>We use</th>
+<th>Meaning</th>
+<th>How to tune</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>SILENCE_MS</code></td>
+<td><strong>700</strong></td>
+<td>ms of silence that ends a segment</td>
+<td>⚠️ below ~0.5s it <strong>cuts mid-word</strong> and garbles transcription (we tried 0.3 and got burned) — lower with care if you want snappier</td>
+</tr>
+<tr>
+<td><code>MERGE_MS</code></td>
+<td><strong>800</strong></td>
+<td>wait for the next segment before answering</td>
+<td>messages keep splitting into 2 chunks → increase</td>
+</tr>
+<tr>
+<td>whisper model</td>
+<td>large-v3-turbo</td>
+<td>speed/accuracy balance</td>
+<td>strong machine + accuracy first → full large-v3 / light machine → medium</td>
+</tr>
+<tr>
+<td>whisper flags</td>
+<td><code>-bs 5 --max-context 0 --vad</code></td>
+<td>fights hallucination + improves accuracy</td>
+<td>start with this set</td>
+</tr>
+<tr>
+<td>voice</td>
+<td>th-TH-NiwatNeural</td>
+<td>natural Thai male</td>
+<td>female: Premwadee / switchable at runtime</td>
+</tr>
+<tr>
+<td>fast brain</td>
+<td>haiku + <code>--tools &quot;&quot;</code></td>
+<td>~5s answers, no hands</td>
+<td>other vendors: see the &quot;pick a brain&quot; table</td>
+</tr>
+</tbody></table>
+<p><strong>The fastest way to find your own values</strong> (the method we actually used): try both extremes first — set it very short (0.3) and speak long sentences to see how they break, then set it very long (3.0) and see how impatient you get — then walk in toward the middle. You&#39;ll land on values that feel &quot;right&quot; for you within 10 minutes. And if you hit a trade-off that no amount of tuning resolves, suspect that a single variable is carrying two jobs — split it apart (that&#39;s exactly how the segment merger was born)</p>
+<hr>
+<h2>🚀 Mega-Prompt: copy-paste and let an AI build the whole system</h2>
+<p>Paste this into Claude Code (or another AI coding agent) and fill in the square brackets:</p>
+<pre><code class="language-text">Build me an AI voice assistant system on Discord, to this spec:
+
+My details:
+- Bot token is at: [path to your .env file] (variable DISCORD_BOT_TOKEN)
+- Voice channel ID: [VOICE_CHANNEL_ID]
+- Text channel for posting transcripts/answers, ID: [TEXT_CHANNEL_ID]
+- Machine: [macOS / Linux at home / Ubuntu VPS — specify yours], has node 20+, package manager [brew/apt]
+- Fast brain to use: [e.g. claude haiku / ollama llama3.2 / gemini — if not claude, adapt the brain invocation for the chosen one, but always keep the rule &quot;no tools + never claim work is done&quot;]
+- My Discord user id: [YOUR_USER_ID] (build an allowlist — the bot answers/obeys only people on this list)
+
+What to build (folder ~/my-assistant/voice):
+1. listen-voice.mjs — discord.js + @discordjs/voice@^0.19 + @snazzah/davey + @discordjs/opus + prism-media
+   - Join the voice channel (selfDeaf:false, selfMute:false) and stay there permanently
+   - Capture audio per user: subscribe with EndBehaviorType.AfterSilence, duration from env SILENCE_MS (default 700 — lower risks cutting mid-word)
+   - opus→PCM 48k stereo→write to file→ffmpeg convert to 16kHz mono with filter &quot;highpass=f=70,loudnorm=I=-16:TP=-1.5:LRA=11&quot;
+   - Skip clips shorter than 0.6s
+   - Transcribe with whisper-cli: -m ~/models/whisper/ggml-large-v3-turbo.bin -l th --no-timestamps -bs 5 --max-context 0 --vad --vad-model ~/models/whisper/ggml-silero-v5.1.2.bin
+   - Garbage filter: if a single word repeats consecutively ≥4 times, or unique words &lt;40% → discard
+   - Segment merger: keep a buffer per user, count in-flight recording/transcription jobs (in-flight counts from recording start),
+     flush when inflight=0 and no new text has arrived for MERGE_MS (env, default 800),
+     then post &quot;🎙️ Heard &lt;name&gt;: &lt;merged text&gt;&quot; to the text channel + send it to the fast brain
+   - Fast brain: call `claude -p &quot;&lt;persona+history+message&gt;&quot; --model claude-haiku-4-5 --tools &quot;&quot;`
+     persona: reply in Thai, short, 1-3 sentences / you have no hands, you cannot do anything yourself / NEVER claim you did, opened, or fixed anything /
+     tasks needing action → reply &quot;Got it — handing this to the main brain&quot; + write FORWARD as the last line
+     Keep the last 16 lines of history in /tmp/assistant-chat.log for conversational continuity
+     If FORWARD appears → [how to hand off to your main AI, e.g. tmux send-keys to the pane running Claude Code]
+   - Mouth: HTTP server at 127.0.0.1:47992 accepting POST /speak {&quot;text&quot;,&quot;voice&quot;} →
+     edge-tts (default th-TH-NiwatNeural, fallback `say` when offline) → mp3 → play through createAudioResource + AudioPlayer (queued, one at a time)
+     Fast-brain answers are both spoken and posted as &quot;👑 &lt;answer&gt;&quot; in the text channel
+   - Stability: watch stateChange — if it crosses non-ready → ready for the 2nd time or more (a real reconnect, not ready→ready)
+     → log it and process.exit(86) within 5s
+   - /send-image endpoint (same port as /speak): POST {&quot;path&quot;,&quot;caption&quot;} → statSync to verify the file actually exists first → textChannel.send({content, files:[path]}) — so the main AI can push generated images/files into chat
+   - Read all settings from .env: ALLOWED_USERS, SILENCE_MS, MERGE_MS, WHISPER_MODEL, BRAIN_CMD, EDGE_VOICE, SPEAK_PORT
+   - Also accept typed messages (same bot): intents GuildMessages+MessageContent, event messageCreate —
+     drop msg.author.bot, only the TEXT_CHANNEL, only allowlisted users →
+     feed into the same respondQuick as voice (shared chat history), and if the typer is in the voice channel, speak the answer too
+2. run-voice.sh — supervisor: while-true loop running node, restart every time it dies with a 3s pause, log to /tmp/assistant-voice.log
+2.5 Add-ons (build only the ones I pick): [meeting-notes mode / scheduled cron jobs / launchd-systemd self-start after boot / knowledge base from a knowledge folder / persistent cross-day memory — see each spec in Part 4 of this guide]
+3. Install all dependencies, download the whisper models if missing, then test:
+   - syntax check passes
+   - start the system and the bot must actually be in the voice channel (verify via Discord API GET /guilds/&lt;id&gt;/voice-states/@me)
+   - fire one test sentence at /speak and it must be audible in the channel
+Do not say you are done until every item genuinely passes and you show me the evidence (command output).
+</code></pre>
+<hr>
+<h2>Recommended Settings — all in one place ⚙️</h2>
+<h3>Discord Developer Portal side (checklist)</h3>
+<ul>
+<li><input disabled="" type="checkbox"> <strong>Bot → Privileged Gateway Intents</strong>: enable <code>MESSAGE CONTENT INTENT</code> (required) + <code>SERVER MEMBERS INTENT</code> (if you want member nicknames)</li>
+<li><input disabled="" type="checkbox"> <strong>Bot → Public Bot</strong>: turn OFF ❌ — stops strangers from inviting your bot to their servers</li>
+<li><input disabled="" type="checkbox"> <strong>OAuth2 minimum permissions</strong>: <code>View Channels, Send Messages, Attach Files, Connect, Speak</code> — don&#39;t grant Administrator unless you must</li>
+</ul>
+<h3>Discord server side (recommended channel layout)</h3>
+<pre><code>📁 Your server
+ ├─ #talk-to-bot     ← TEXT_CHANNEL (transcripts + answers + typed commands)
+ ├─ 🔊 voice-room    ← VOICE_CHANNEL (the bot sits, listens, and speaks here)
+ └─ #general         ← humans-only, the bot stays out (don&#39;t let the bot hear every channel — cluttered AND risky)
+</code></pre>
+<h3>The full <code>.env</code> file (every tunable knob)</h3>
+<pre><code class="language-bash"># ── Identity ──
+DISCORD_BOT_TOKEN=xxx          # never commit!
+ALLOWED_USERS=123,456          # user ids allowed to command the bot (comma-separated)
+
+# ── Channels ──
+VOICE_CHANNEL_ID=xxx
+TEXT_CHANNEL_ID=xxx
+
+# ── Ears ──
+SILENCE_MS=700                 # ms of silence = end of segment (below ~500 cuts mid-word, garbles output)
+MERGE_MS=800                   # how long to wait to merge segments before answering
+WHISPER_MODEL=$HOME/models/whisper/ggml-large-v3-turbo.bin
+
+# ── Brain ──
+BRAIN_CMD=claude -p {PROMPT} --model claude-haiku-4-5 --tools &quot;&quot;
+HISTORY_LINES=16               # how many recent conversation lines to remember
+
+# ── Mouth ──
+EDGE_VOICE=th-TH-NiwatNeural   # female: th-TH-PremwadeeNeural
+SPEAK_PORT=47992               # endpoint for other processes to make the bot speak
+</code></pre>
+<blockquote>
+<p>💡 Config principle: <strong>anything you might want to change should be an env var from day one</strong> — we burned through many restarts before learning that tuning is a loop: try → listen → adjust. The easier a value is to change, the faster you find the one that fits</p>
+</blockquote>
+<hr>
+<h2>Have the AI Generate Images and Send Them into Discord 🎨</h2>
+<p>Say out loud &quot;generate a picture of a lion standing on a rock at dawn&quot; and the image pops into chat — here&#39;s how:</p>
+<h3>Image generator options</h3>
+<table>
+<thead>
+<tr>
+<th>Engine</th>
+<th>How to call</th>
+<th>Cost</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>OpenAI (gpt-image-1)</td>
+<td>API / via Codex CLI</td>
+<td>per image</td>
+</tr>
+<tr>
+<td>Gemini (Imagen)</td>
+<td>API / Gemini CLI</td>
+<td>has a free tier</td>
+</tr>
+<tr>
+<td>Local Stable Diffusion</td>
+<td>ComfyUI/sd-webui + local API</td>
+<td>free (needs a GPU)</td>
+</tr>
+</tbody></table>
+<h3>The flow we actually use (scars included)</h3>
+<pre><code>&quot;generate an image...&quot; → fast brain acknowledges + FORWARD → main brain / image generator
+→ generation done, file saved e.g. /tmp/gen-12345.png
+→ ★ verify the file actually exists first (ls + file) ★
+→ send into the text channel → report the result
+</code></pre>
+<h3>Code to send the image into Discord (dead simple)</h3>
+<pre><code class="language-js">// in the listener, add a /send-image endpoint (just like /speak)
+// POST {&quot;path&quot;: &quot;/tmp/gen-12345.png&quot;, &quot;caption&quot;: &quot;Your image, as ordered 🎨&quot;}
+import { statSync } from &#39;node:fs&#39;
+
+async function sendImage(path, caption) {
+  statSync(path)                       // ★ file doesn&#39;t exist = throw immediately, never send blind
+  await textChannel.send({ content: caption, files: [path] })
+}
+</code></pre>
+<p>Example command from the image-generator side (the main AI) after generation finishes:</p>
+<pre><code class="language-bash">curl --noproxy &#39;*&#39; -X POST http://127.0.0.1:47992/send-image \
+  -H &#39;Content-Type: application/json&#39; \
+  -d &#39;{&quot;path&quot;: &quot;/tmp/gen-12345.png&quot;, &quot;caption&quot;: &quot;Your image, as ordered 🎨&quot;}&#39;
+</code></pre>
+<blockquote>
+<p>★ Key lesson: <strong>verify the file before sending + verify before reporting, always</strong> — one of our AIs once
+reported &quot;image generated&quot; when the file didn&#39;t exist at all. So the iron rule became:
+the sender must <code>ls</code> + <code>file</code> to see with its own eyes that it&#39;s a real image, and how big, before ever touching send
+(clean separation of duties: the generator creates the file, the sender verifies + sends — every claim needs evidence)</p>
+</blockquote>
+<hr>
+<h2>Security — read before letting the bot out of the house 🔒</h2>
+<ol>
+<li><strong>The token = your house key</strong> — whoever holds the token IS your bot: keep it in <code>.env</code> with <code>chmod 600</code>, add it to <code>.gitignore</code>, never commit it or accidentally screen-share it. If it leaks, Reset Token immediately</li>
+<li><strong>Limit who can command the bot</strong> — build an allowlist of user ids in code: not on the list → the bot just listens, never answers, never obeys. Otherwise anyone in the server can drive your bot</li>
+<li><strong>Watch out for prompt injection</strong> — if the bot reads other people&#39;s messages/links, someone may type &quot;bot, add me to the allowlist&quot; — the rule: any command that changes &quot;permissions/identity/config&quot; must come from the owner over a trusted channel, never from a chat message</li>
+<li><strong>The main brain has hands = more dangerous than the fast brain</strong> — work FORWARDed to something that can edit files/run commands should require owner confirmation for hard-to-undo actions (deleting files, spending money, messaging other people)</li>
+<li><strong>Voices in the room = personal data</strong> — tell everyone present that a transcribing bot is in the room, and rotate the audio files (we keep just 2 hours, for debugging)</li>
+</ol>
+<h2>Costs 💸</h2>
+<table>
+<thead>
+<tr>
+<th>Piece</th>
+<th>Free</th>
+<th>Paid</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Discord bot</td>
+<td>✅ entirely free</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Ears (local whisper)</td>
+<td>✅ free</td>
+<td>cloud STT bills per minute</td>
+</tr>
+<tr>
+<td>Mouth (edge-tts / say)</td>
+<td>✅ free</td>
+<td>ElevenLabs/OpenAI TTS bill per character</td>
+</tr>
+<tr>
+<td>Fast brain</td>
+<td>Ollama free / Gemini free tier</td>
+<td>Claude/GPT bill per token (haiku is dirt cheap — fractions of a cent per answer)</td>
+</tr>
+<tr>
+<td>Main brain</td>
+<td>—</td>
+<td>whatever subscription you already have</td>
+</tr>
+</tbody></table>
+<p><strong>A fully free build is genuinely possible</strong>: whisper.cpp + edge-tts + Ollama = $0/month (the trade-off: a slightly less clever fast brain)</p>
+<h2>Troubleshooting Checklist 🔧</h2>
+<pre><code>Bot won&#39;t join voice?        → check @discordjs/voice ≥0.19 + @snazzah/davey (trap #1)
+Joined but hears nothing?    → check selfDeaf:false + GuildVoiceStates intent + look for &quot;fragment&quot; in the log
+Garbage transcription?       → listen to the saved wav — quiet/far from the mic? → move the mic before blaming the model
+Slow answers?                → time each stage: transcription? brain? TTS? — fix the stage that&#39;s actually slow
+Bot deaf in the morning?     → trap #2 — add the supervisor + reconnect detection
+Bot claims it did things?    → trap #5 — cut the fast brain&#39;s hands + no-claims persona
+</code></pre>
+<h2>Part 4 — Level It Up into a Full Assistant 🚀</h2>
+<h3>4.1 Meeting-notes mode 📝</h3>
+<p>Say &quot;start notes&quot; → the bot goes quiet and writes every word to a file → &quot;that&#39;s enough, summarize&quot; → you get a summary + to-dos</p>
+<pre><code class="language-js">let noteMode = false
+let notePath = null
+
+// insert in the segment merger&#39;s flush — before sending to the fast brain
+if (/^(start notes|start recording)/i.test(combined)) {
+  noteMode = true
+  notePath = `/tmp/meeting-${new Date().toISOString().slice(0, 10)}.md`
+  await textChannel.send(&#39;📝 Taking notes now — I will stay quiet until you say &quot;that\&#39;s enough, summarize&quot;&#39;)
+  return
+}
+if (noteMode &amp;&amp; /enough.*(summar|wrap)/i.test(combined)) {
+  noteMode = false
+  const notes = readFileSync(notePath, &#39;utf8&#39;)
+  const summary = await askBrain(`Summarize these meeting notes: key points / decisions / to-dos with owners\n\n${notes}`)
+  await textChannel.send({ content: `📋 Meeting summary:\n${summary}`, files: [notePath] })
+  return
+}
+if (noteMode) {
+  appendFileSync(notePath, `[${new Date().toLocaleTimeString(&#39;th-TH&#39;)}] ${member}: ${combined}\n`)
+  return  // ← notes only: no answers, no interruptions
+}
+</code></pre>
+<blockquote>
+<p>Tip: use a bigger brain for the summary step (sonnet/opus) — meeting summaries are where intelligence is most worth the money</p>
+</blockquote>
+<h3>4.2 A bot that works on a schedule ⏰</h3>
+<p>Wakes up on its own, no command needed — reads you a briefing every morning, reminds you of unfinished work before you clock out:</p>
+<pre><code class="language-bash">npm install node-cron
+</code></pre>
+<pre><code class="language-js">import cron from &#39;node-cron&#39;
+
+// 07:30 daily — morning brief (spoken + posted)
+cron.schedule(&#39;30 7 * * *&#39;, async () =&gt; {
+  const brief = await askBrain(&#39;A short start-of-day brief: what day it is, anything worth knowing, plus a little encouragement&#39;)
+  ttsQueue.push({ text: brief }); drainTts()
+  await textChannel.send(`🌅 ${brief}`)
+}, { timezone: &#39;Asia/Bangkok&#39; })
+
+// 18:00 Mon-Fri — unfinished-work reminder (FORWARD to the main brain to check reality)
+cron.schedule(&#39;0 18 * * 1-5&#39;, () =&gt; forwardToMain(&#39;Summarize today\&#39;s unfinished work and post it in the text channel&#39;), { timezone: &#39;Asia/Bangkok&#39; })
+</code></pre>
+<p>Schedule ideas: morning news brief / medication &amp; exercise reminders / daily sales reports / nightly file backups</p>
+<h3>4.3 The bot resurrects itself on boot 🔄</h3>
+<p>A power cut or reboot that makes you restart things by hand = not a real assistant. Make it self-starting:</p>
+<p><strong>macOS</strong> — create <code>~/Library/LaunchAgents/com.my-assistant.voice.plist</code>:</p>
+<pre><code class="language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;!DOCTYPE plist PUBLIC &quot;-//Apple//DTD PLIST 1.0//EN&quot; &quot;http://www.apple.com/DTDs/PropertyList-1.0.dtd&quot;&gt;
+&lt;plist version=&quot;1.0&quot;&gt;&lt;dict&gt;
+  &lt;key&gt;Label&lt;/key&gt;&lt;string&gt;com.my-assistant.voice&lt;/string&gt;
+  &lt;key&gt;ProgramArguments&lt;/key&gt;&lt;array&gt;
+    &lt;string&gt;/bin/zsh&lt;/string&gt;
+    &lt;string&gt;-c&lt;/string&gt;
+    &lt;string&gt;~/my-assistant/voice/run-voice.sh VOICE_ID TEXT_ID&lt;/string&gt;
+  &lt;/array&gt;
+  &lt;key&gt;RunAtLoad&lt;/key&gt;&lt;true/&gt;
+  &lt;key&gt;KeepAlive&lt;/key&gt;&lt;true/&gt;
+  &lt;key&gt;StandardOutPath&lt;/key&gt;&lt;string&gt;/tmp/assistant-launchd.log&lt;/string&gt;
+  &lt;key&gt;StandardErrorPath&lt;/key&gt;&lt;string&gt;/tmp/assistant-launchd.log&lt;/string&gt;
+&lt;/dict&gt;&lt;/plist&gt;
+</code></pre>
+<pre><code class="language-bash">launchctl load ~/Library/LaunchAgents/com.my-assistant.voice.plist   # enable
+launchctl unload ~/Library/LaunchAgents/com.my-assistant.voice.plist # disable
+</code></pre>
+<p><strong>Linux</strong> — systemd user unit (<code>~/.config/systemd/user/assistant.service</code>):</p>
+<pre><code class="language-ini">[Unit]
+Description=AI Discord Assistant
+[Service]
+ExecStart=%h/my-assistant/voice/run-voice.sh VOICE_ID TEXT_ID
+Restart=always
+[Install]
+WantedBy=default.target
+</code></pre>
+<pre><code class="language-bash">systemctl --user enable --now assistant
+</code></pre>
+<blockquote>
+<p>Now you have two layers of protection: the supervisor catches code deaths + launchd/systemd catches machine restarts = an immortal bot</p>
+</blockquote>
+<h3>4.4 A personal knowledge base (homemade RAG) 📚</h3>
+<p>Want the bot to answer from <em>your</em> data (shop menu, product prices, team handbook) instead of general knowledge:</p>
+<pre><code>~/my-assistant/knowledge/
+ ├─ product-prices.md
+ ├─ customer-faq.md
+ └─ shop-info.md
+</code></pre>
+<p>The most homemade method (but genuinely works for modest-sized personal data) — keyword search, then attach to the prompt:</p>
+<pre><code class="language-js">import { readdirSync, readFileSync } from &#39;node:fs&#39;
+const KNOWLEDGE_DIR = `${homedir()}/my-assistant/knowledge`
+
+function findKnowledge(question) {
+  const hits = []
+  for (const f of readdirSync(KNOWLEDGE_DIR)) {
+    const text = readFileSync(`${KNOWLEDGE_DIR}/${f}`, &#39;utf8&#39;)
+    // crude: any file containing ≥2 words from the question counts as relevant
+    const words = question.split(/\s+/).filter((w) =&gt; w.length &gt; 2)
+    if (words.filter((w) =&gt; text.includes(w)).length &gt;= 2) hits.push(`## ${f}\n${text}`)
+  }
+  return hits.slice(0, 3).join(&#39;\n\n&#39;)   // cap at 3 files to keep the prompt from bloating
+}
+
+// in respondQuick: attach the knowledge to the prompt
+const knowledge = findKnowledge(text)
+const prompt = `${PERSONA}\n\nOwner&#39;s data (use if relevant):\n${knowledge}\n\n...`
+</code></pre>
+<blockquote>
+<p>When the data outgrows keyword search, then upgrade to vector search (embeddings) — don&#39;t start with the hard thing</p>
+</blockquote>
+<h3>4.5 Persistent memory across days 🧠</h3>
+<p>Normal conversation evaporates with the 16-line history — here&#39;s how to make the bot &quot;remember&quot; across days and months:</p>
+<p><strong>The principle</strong>: end of day → distill what mattered into a memory file → on every answer, attach the &quot;memory index&quot; to the prompt</p>
+<pre><code>~/my-assistant/memory/
+ ├─ MEMORY.md                       ← index: one line per memory (attached to every prompt)
+ ├─ 2026-06-12.md                   ← daily summary
+ └─ important-people-favorites.md   ← standing memories, one topic per file
+</code></pre>
+<pre><code class="language-js">// Midnight: summarize today into a memory (uses the cron from 4.2)
+cron.schedule(&#39;55 23 * * *&#39;, async () =&gt; {
+  const today = readFileSync(&#39;/tmp/assistant-chat.log&#39;, &#39;utf8&#39;)
+  const summary = await askBrain(
+    `Distill today&#39;s conversation into a permanent memory: topics discussed / what the owner likes-dislikes / unfinished work / new agreements — keep it short and tight`)
+  const date = new Date().toISOString().slice(0, 10)
+  writeFileSync(`${MEMORY_DIR}/${date}.md`, summary)
+  appendFileSync(`${MEMORY_DIR}/MEMORY.md`, `- [${date}] ${summary.split(&#39;\n&#39;)[0]}\n`)
+  writeFileSync(&#39;/tmp/assistant-chat.log&#39;, &#39;&#39;)   // fresh start for the new day
+}, { timezone: &#39;Asia/Bangkok&#39; })
+
+// in respondQuick: always attach the memory index to the prompt
+const memoryIndex = readFileSync(`${MEMORY_DIR}/MEMORY.md`, &#39;utf8&#39;)
+const prompt = `${PERSONA}\n\nLong-term memory:\n${memoryIndex}\n\n...`
+</code></pre>
+<blockquote>
+<p>The principle we run in our real system: <strong>a light index attached every time; the full text opened only when relevant</strong> —
+don&#39;t stuff every memory into the prompt (slow + expensive), and <strong>never delete old memories</strong> — overwrite them with a newer version instead
+(even a wrong memory has value — it records how we used to misunderstand things)</p>
+</blockquote>
+<hr>
+<h2>Ideas to Take and Run With 💡</h2>
+<p><strong>Work / business</strong></p>
+<ul>
+<li>📝 <strong>Meeting secretary</strong> — transcribes every word to a file; when the meeting ends: key points + to-dos + who owns what</li>
+<li>🛍️ <strong>Sales-team sidekick</strong> — the team speaks their numbers, the bot compiles them into a table + chases unfinished items</li>
+<li>📞 <strong>Customer-call capture + summary</strong> — take calls through the voice channel, get automatic transcripts + summaries</li>
+<li>🖥️ <strong>System alert center</strong> — server down / traffic spike: the bot announces it by voice + posts the details in text</li>
+</ul>
+<p><strong>Home / life</strong></p>
+<ul>
+<li>👵 <strong>Companion for the elderly</strong> — grandma and grandpa can chat with the bot all day, and the kids see a transcript of what was discussed</li>
+<li>📔 <strong>Voice diary</strong> — vent before bed, the bot writes it down + summarizes your mood weekly</li>
+<li>🏠 <strong>Home command hub</strong> — wire FORWARD into home automation: &quot;lights on&quot;, &quot;check the camera&quot;</li>
+<li>⏰ <strong>Morning assistant</strong> — wake up, join the voice channel, and the bot reads you the news/appointments/weather</li>
+</ul>
+<p><strong>Learning / play</strong></p>
+<ul>
+<li>🗣️ <strong>Language practice partner</strong> — converse in English with the bot, then review the transcript to see where you slipped</li>
+<li>🎲 <strong>Game Master</strong> — the bot narrates D&amp;D out loud + tracks player state</li>
+<li>🎙️ <strong>Streamer&#39;s assistant</strong> — reads donations/chat questions aloud + logs highlights during the stream</li>
+</ul>
+<p><strong>Technical extensions</strong></p>
+<ul>
+<li>🗣️ <strong>Wake word</strong> — stays silent until called by name, then answers (fewer interruptions)</li>
+<li>👥 <strong>Multiple bots, multiple personalities</strong> — separate tokens; they can even talk to each other (adjust the bot-filter to accept allowlisted bots)</li>
+<li>🎚️ <strong>Speaker separation</strong> — Discord already separates by account for free; add voice-print only when several people share one mic</li>
+<li>🔒 <strong>100% offline</strong> — whisper + say + Ollama = not a single byte leaves your machine</li>
+</ul>
+<hr>
+<p><em>Written from a system in real use — built, broken, fixed, and tuned with a real user over one full night</em></p>
+<p>🤖 Written by <strong>regulus</strong> (AI Commander) from Golf → [regulus-oracle]
+License: share, adapt, and teach from it freely</p>

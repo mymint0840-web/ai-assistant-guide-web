@@ -18,18 +18,18 @@ function prepare(html, prefix) {
   return { out, toc }
 }
 
-const easyP = prepare(readFileSync('easy-body.html', 'utf8'), 'e')
-const fullP = prepare(readFileSync('full-body.html', 'utf8'), 'f')
+const easyP = prepare(readFileSync('easy-body-en.html', 'utf8'), 'e')
+const fullP = prepare(readFileSync('full-body-en.html', 'utf8'), 'f')
 
 const tocList = (toc) => toc.map((t) => `<a href="#${t.id}" data-target="${t.id}">${t.label}</a>`).join('\n')
 
 const html = `<!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>สร้างผู้ช่วย AI ส่วนตัวบน Discord — ฟังเสียง พูดได้ สั่งงานได้ — Pop Edition</title>
-<meta name="description" content="คู่มือภาษาไทยฉบับสมบูรณ์ สร้างผู้ช่วย AI บน Discord จากการสร้างจริง — มีทั้งฉบับอ่านง่ายและฉบับลงมือทำ (Pop Edition)">
+<title>Build Your Own AI Assistant on Discord — It Hears, Speaks, and Gets Things Done</title>
+<meta name="description" content="The complete guide to building your own AI assistant on Discord, from real-world experience — easy edition and full build edition">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -211,41 +211,41 @@ body.dark .msg { color: #111; }
 </head>
 <body>
 <script>if (localStorage.getItem('pop-mode') === 'dark') document.body.classList.add('dark')</script>
-<button class="mode-toggle" onclick="toggleMode()" title="สลับโหมดสว่าง/มืด">🌙</button>
-<a class="lang-toggle" href="/en/discord-assistant/" title="Read in English">EN</a>
+<button class="mode-toggle" onclick="toggleMode()" title="Toggle light/dark mode">🌙</button>
+<a class="lang-toggle" href="/discord-assistant/" title="อ่านภาษาไทย">ไทย</a>
 
 <section class="hero">
   <div class="wrap">
-    <div class="kicker">🎙️ เล่มที่ 2 ของซีรีส์ — ต่อยอดจาก Oracle เล่มแรก</div>
+    <div class="kicker">🎙️ Book 2 of the series — built on Oracle (Book 1)</div>
     <div class="headline-card">
-      <h1>สร้างผู้ช่วย AI ส่วนตัวบน Discord<br>ฟังเสียง · พูดได้ · สั่งงานได้</h1>
+      <h1>Build Your Own AI Assistant on Discord<br>It Hears · Speaks · Gets Things Done</h1>
     </div>
-    <p class="sub">เลขา AI ที่อยู่กับคุณ 24 ชม. — พูดสั่งงานได้เหมือนคุยโทรศัพท์ ถอดเสียงไทยในเครื่องตัวเอง พร้อมพิมพ์เขียวให้ AI สร้างให้ทั้งระบบ</p>
+    <p class="sub">An AI secretary by your side 24/7 — talk to it like a phone call, speech transcribed on your own machine, plus a blueprint an AI can build for you end-to-end</p>
     <div class="cta">
-      <button class="btn primary" onclick="show('easy');document.getElementById('reader').scrollIntoView({behavior:'smooth'})">📖 เริ่มอ่านฉบับเข้าใจง่าย</button>
-      <button class="btn ghost" onclick="show('full');document.getElementById('reader').scrollIntoView({behavior:'smooth'})">🔧 ฉบับลงมือทำ</button>
-      <a class="btn" style="display:inline-block;text-decoration:none;background:var(--pink)" href="https://mymint0840-web.github.io/oracle-guide-web/">🔮 อ่านเล่มที่ 1: Oracle</a>
+      <button class="btn primary" onclick="show('easy');document.getElementById('reader').scrollIntoView({behavior:'smooth'})">📖 Start with the easy edition</button>
+      <button class="btn ghost" onclick="show('full');document.getElementById('reader').scrollIntoView({behavior:'smooth'})">🔧 Full build edition</button>
+      <a class="btn" style="display:inline-block;text-decoration:none;background:var(--pink)" href="/en/oracle/">🔮 Read Book 1: Oracle</a>
     </div>
     <div class="demo">
       <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-      <div class="msg user">🎙️ "ช่วยจดประชุมหน่อย แล้วสรุปให้ด้วย"</div>
-      <div class="msg bot">👑 รับครับ เริ่มจดแล้ว — จบประชุมผมสรุปประเด็น + งานค้างให้เลยครับ</div>
-      <div class="msg user m2">⌨️ "ทำรูปโปรโมทร้านให้หน่อย โทนอุ่น ๆ"</div>
-      <div class="msg bot m2">👑 ได้ครับ กำลังส่งให้ทีมเจนรูป เดี๋ยวรูปเด้งเข้าห้องนี้ครับ 🎨</div>
+      <div class="msg user">🎙️ "Take meeting notes, and summarize when we finish"</div>
+      <div class="msg bot">👑 On it — recording now. Key points + action items coming when the meeting ends.</div>
+      <div class="msg user m2">⌨️ "Make a promo image for the shop, warm tones"</div>
+      <div class="msg bot m2">👑 Sure — sending it to the image team. It will pop up in this channel shortly 🎨</div>
     </div>
   </div>
 </section>
 
 <section class="features">
   <div class="wrap">
-    <h2><span>มันทำอะไรได้บ้าง</span></h2>
+    <h2><span>What can it do?</span></h2>
     <div class="grid">
-      <div class="feat"><div class="ic">🎙️</div><div class="t">ฟังเสียงไทยรู้เรื่อง</div><div class="d">พูดสั่งในห้องเสียง ถอดเป็นข้อความในเครื่องคุณเอง — เสียงไม่ออกไปไหน</div></div>
-      <div class="feat"><div class="ic">🗣️</div><div class="t">พูดตอบกลับ</div><div class="d">เสียง AI ไทยธรรมชาติ เลือกชาย/หญิง คุยโต้ตอบได้จริง</div></div>
-      <div class="feat"><div class="ic">⚡</div><div class="t">ตอบไวใน ~10 วิ</div><div class="d">สมองเร็วตอบทันที งานใหญ่ส่งต่อสมองหลักไปทำจริง</div></div>
-      <div class="feat"><div class="ic">🧠</div><div class="t">จำได้ข้ามวัน</div><div class="d">สรุปบทสนทนาเก็บเป็นความจำ เดือนหน้าถามต่อได้</div></div>
-      <div class="feat"><div class="ic">🎨</div><div class="t">สั่งทำรูป/งานจริง</div><div class="d">เจนรูป จดประชุม เตือนงาน ทำงานตามเวลา</div></div>
-      <div class="feat"><div class="ic">💸</div><div class="t">ทำฟรีได้จริง</div><div class="d">ทุกชิ้นมีทางเลือกฟรี — เครื่องเก่าที่บ้านหรือ VPS ก็รันได้</div></div>
+      <div class="feat"><div class="ic">🎙️</div><div class="t">Understands speech</div><div class="d">Talk in a voice channel; transcription happens on your own machine — audio never leaves</div></div>
+      <div class="feat"><div class="ic">🗣️</div><div class="t">Talks back</div><div class="d">Natural neural voices, male or female — a real two-way conversation</div></div>
+      <div class="feat"><div class="ic">⚡</div><div class="t">Replies in ~10s</div><div class="d">A fast brain answers instantly; big jobs go to the main brain</div></div>
+      <div class="feat"><div class="ic">🧠</div><div class="t">Remembers across days</div><div class="d">Conversations distilled into memory — ask about them next month</div></div>
+      <div class="feat"><div class="ic">🎨</div><div class="t">Does real work</div><div class="d">Generates images, takes notes, reminds you, runs on schedule</div></div>
+      <div class="feat"><div class="ic">💸</div><div class="t">Can be 100% free</div><div class="d">Every component has a free option — runs on an old PC or a cheap VPS</div></div>
     </div>
   </div>
 </section>
@@ -253,10 +253,10 @@ body.dark .msg { color: #111; }
 <div class="wrap reader" id="reader">
   <aside class="toc" id="toc">
     <div class="tabs">
-      <button class="tab active" data-t="easy" onclick="show('easy')">📖 อ่านง่าย</button>
-      <button class="tab" data-t="full" onclick="show('full')">🔧 ฉบับเต็ม</button>
+      <button class="tab active" data-t="easy" onclick="show('easy')">📖 Easy</button>
+      <button class="tab" data-t="full" onclick="show('full')">🔧 Full build</button>
     </div>
-    <div class="toc-title">สารบัญ — กดข้ามได้เลย</div>
+    <div class="toc-title">Contents — click to jump</div>
     <nav id="toc-easy" class="active">${tocList(easyP.toc)}</nav>
     <nav id="toc-full">${tocList(fullP.toc)}</nav>
   </aside>
@@ -266,12 +266,12 @@ body.dark .msg { color: #111; }
   </div>
 </div>
 
-<button class="toc-fab" onclick="document.getElementById('toc').classList.toggle('open')">📑 สารบัญ</button>
+<button class="toc-fab" onclick="document.getElementById('toc').classList.toggle('open')">📑 Contents</button>
 
 <footer>
-  <p>🏠 <a href="https://mymint0840-web.github.io/">หน้าหลัก (ทุกเล่ม)</a> · 📚 เล่มที่ 1 ของซีรีส์: <a href="https://mymint0840-web.github.io/oracle-guide-web/">Oracle — AI ที่มีตัวตน มีความจำ และโตไปกับคุณ</a></p>
-  <p>🙏 เครดิตผู้สร้างทาง: <a href="https://www.facebook.com/nat.wrw" target="_blank">Nat Weerawan</a> ผู้ให้กำเนิดแนวคิด Oracle · <a href="https://www.facebook.com/profile.php?id=61563658892025" target="_blank">ARRA Oracle Community &amp; Conference</a> และพี่ ๆ ในคอมมูนิตี้ทุกท่าน</p>
-  <p>🤖 เขียนโดย <strong>regulus</strong> (AI Commander) จาก Golf → regulus-oracle</p>
+  <p>🏠 <a href="/en/">Library home</a> · 📚 Book 1 of the series: <a href="/en/oracle/">Oracle — An AI with Identity and Memory That Grows With You</a></p>
+  <p>🙏 Credits: <a href="https://www.facebook.com/nat.wrw" target="_blank">Nat Weerawan</a>, creator of the Oracle concept · <a href="https://www.facebook.com/profile.php?id=61563658892025" target="_blank">ARRA Oracle Community &amp; Conference</a> and the whole community</p>
+  <p>🤖 Written by <strong>regulus</strong> (AI Commander) from Golf → regulus-oracle</p>
 </footer>
 
 <script>
@@ -314,6 +314,5 @@ if (document.body.classList.contains('dark')) document.querySelector('.mode-togg
 </body>
 </html>`
 
-writeFileSync('pop.html', html)
-writeFileSync('index.html', html) // Pop คือดีไซน์ที่กอล์ฟเลือก — เป็นหน้าแรกด้วย
+writeFileSync('index-en.html', html)
 console.log('built pop.html + index.html (Pop Edition) — easy TOC:', easyP.toc.length, 'items, full TOC:', fullP.toc.length, 'items')

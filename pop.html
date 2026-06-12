@@ -151,6 +151,10 @@ body.dark .msg { color: #111; }
   background: var(--paper); border: var(--bd); box-shadow: var(--pop-sm); border-radius: 999px;
   padding: 10px 13px; cursor: pointer; transition: transform .1s, box-shadow .1s; }
 .mode-toggle:hover { transform: translate(1px, 1px); box-shadow: 2px 2px 0 var(--ink); }
+.lang-toggle { position: fixed; top: 16px; right: 72px; z-index: 60; font-size: .95rem; font-weight: 600; line-height: 1;
+  background: var(--paper); color: var(--ink); border: var(--bd); box-shadow: var(--pop-sm); border-radius: 999px;
+  padding: 12px 15px; cursor: pointer; text-decoration: none; }
+.lang-toggle:hover { transform: translate(1px, 1px); box-shadow: 2px 2px 0 var(--ink); background: var(--yellow); color: #111; }
 
 /* mobile */
 .toc-fab { display: none; }
@@ -183,6 +187,7 @@ body.dark .msg { color: #111; }
 <body>
 <script>if (localStorage.getItem('pop-mode') === 'dark') document.body.classList.add('dark')</script>
 <button class="mode-toggle" onclick="toggleMode()" title="สลับโหมดสว่าง/มืด">🌙</button>
+<a class="lang-toggle" href="/en/discord-assistant/" title="Read in English">EN</a>
 
 <section class="hero">
   <div class="wrap">
