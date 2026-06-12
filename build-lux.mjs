@@ -142,7 +142,7 @@ footer a { color: var(--blue); }
 
 <section class="hero">
   <div class="wrap">
-    <div class="kicker">คู่มือภาษาไทย · จากการสร้างจริงใน 1 คืน · แจกฟรี CC BY 4.0</div>
+    <div class="kicker">คู่มือภาษาไทย</div>
     <h1>สร้างผู้ช่วย AI ส่วนตัวบน Discord<br>ฟังเสียง · พูดได้ · สั่งงานได้</h1>
     <p class="sub">เลขา AI ที่อยู่กับคุณ 24 ชม. — พูดสั่งงานได้เหมือนคุยโทรศัพท์ ถอดเสียงไทยในเครื่องตัวเอง พร้อมพิมพ์เขียวให้ AI สร้างให้ทั้งระบบ</p>
     <div class="cta">
@@ -229,5 +229,5 @@ document.querySelectorAll('.toc a').forEach(a => a.addEventListener('click', () 
 </body>
 </html>`
 
-writeFileSync('index.html', html)
-console.log('built flagship index.html — easy TOC:', easyP.toc.length, 'items, full TOC:', fullP.toc.length, 'items')
+writeFileSync('flagship.html', html) // Pop ครองหน้าแรกแล้ว — flagship ย้ายมาที่นี่
+console.log('built flagship.html — easy TOC:', easyP.toc.length, 'items, full TOC:', fullP.toc.length, 'items')

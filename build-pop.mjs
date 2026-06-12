@@ -151,6 +151,29 @@ article img { max-width: 100%; border: var(--bd); border-radius: 8px; }
 footer { border-top: var(--bd); padding: 34px 24px 60px; text-align: center; font-size: .9rem; background: var(--yellow); }
 footer p { margin: .5em 0; }
 
+/* ── dark mode (โหมดมืด — สำหรับคนแสบตาพื้นขาว) ── */
+body.dark {
+  --cream: #17171d; --ink: #f2f2ec; --paper: #222230;
+  background-image: radial-gradient(rgba(255,255,255,.07) 1.5px, transparent 1.5px);
+}
+body.dark .hero { background: repeating-linear-gradient(-45deg, #17171d, #17171d 28px, #1e1e28 28px, #1e1e28 56px); }
+/* องค์ประกอบที่พื้นเป็นสีสด — ตัวอักษรต้องดำเสมอ อ่านออกทั้งสองโหมด */
+body.dark .headline-card, body.dark .feat, body.dark footer, body.dark .tab.active,
+body.dark .toc .toc-title, body.dark article strong, body.dark article th,
+body.dark article :not(pre) > code, body.dark .toc a.on, body.dark .msg,
+body.dark .kicker, body.dark .btn, body.dark .toc-fab { color: #111; }
+body.dark .tab { color: var(--ink); }
+body.dark .tab.active { color: #111; }
+body.dark article p, body.dark article li { color: #e3e3dc; }
+body.dark .toc a:hover { background: #2c2c3a; }
+body.dark .demo { background: var(--paper); }
+body.dark .msg { color: #111; }
+
+.mode-toggle { position: fixed; top: 16px; right: 16px; z-index: 60; font-size: 1.25rem; line-height: 1;
+  background: var(--paper); border: var(--bd); box-shadow: var(--pop-sm); border-radius: 999px;
+  padding: 10px 13px; cursor: pointer; transition: transform .1s, box-shadow .1s; }
+.mode-toggle:hover { transform: translate(1px, 1px); box-shadow: 2px 2px 0 var(--ink); }
+
 /* mobile */
 .toc-fab { display: none; }
 @media (max-width: 900px) {
@@ -166,6 +189,8 @@ footer p { margin: .5em 0; }
 </style>
 </head>
 <body>
+<script>if (localStorage.getItem('pop-mode') === 'dark') document.body.classList.add('dark')</script>
+<button class="mode-toggle" onclick="toggleMode()" title="สลับโหมดสว่าง/มืด">🌙</button>
 
 <section class="hero">
   <div class="wrap">
@@ -173,7 +198,7 @@ footer p { margin: .5em 0; }
     <div class="headline-card">
       <h1>สร้างผู้ช่วย AI ส่วนตัวบน Discord<br>ฟังเสียง · พูดได้ · สั่งงานได้</h1>
     </div>
-    <p class="sub">เลขา AI ที่อยู่กับคุณ 24 ชม. — พูดสั่งงานได้เหมือนคุยโทรศัพท์ ถอดเสียงไทยในเครื่องตัวเอง พร้อมพิมพ์เขียวให้ AI สร้างให้ทั้งระบบ · คู่มือภาษาไทย จากการสร้างจริงใน 1 คืน · แจกฟรี CC BY 4.0</p>
+    <p class="sub">เลขา AI ที่อยู่กับคุณ 24 ชม. — พูดสั่งงานได้เหมือนคุยโทรศัพท์ ถอดเสียงไทยในเครื่องตัวเอง พร้อมพิมพ์เขียวให้ AI สร้างให้ทั้งระบบ</p>
     <div class="cta">
       <button class="btn primary" onclick="show('easy');document.getElementById('reader').scrollIntoView({behavior:'smooth'})">📖 เริ่มอ่านฉบับเข้าใจง่าย</button>
       <button class="btn ghost" onclick="show('full');document.getElementById('reader').scrollIntoView({behavior:'smooth'})">🔧 ฉบับลงมือทำ</button>
@@ -254,9 +279,17 @@ armSpy()
 document.querySelectorAll('.toc a').forEach(a => a.addEventListener('click', () => {
   document.getElementById('toc').classList.remove('open')
 }))
+// โหมดสว่าง/มืด — จำค่าที่เลือกไว้
+function toggleMode() {
+  const dark = document.body.classList.toggle('dark')
+  localStorage.setItem('pop-mode', dark ? 'dark' : 'light')
+  document.querySelector('.mode-toggle').textContent = dark ? '☀️' : '🌙'
+}
+if (document.body.classList.contains('dark')) document.querySelector('.mode-toggle').textContent = '☀️'
 </script>
 </body>
 </html>`
 
 writeFileSync('pop.html', html)
-console.log('built pop.html (Pop Edition) — easy TOC:', easyP.toc.length, 'items, full TOC:', fullP.toc.length, 'items')
+writeFileSync('index.html', html) // Pop คือดีไซน์ที่กอล์ฟเลือก — เป็นหน้าแรกด้วย
+console.log('built pop.html + index.html (Pop Edition) — easy TOC:', easyP.toc.length, 'items, full TOC:', fullP.toc.length, 'items')

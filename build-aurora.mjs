@@ -231,7 +231,7 @@ footer a { color: var(--cyan); }
 <section class="hero">
   <div class="wrap">
     <div class="hero-panel">
-      <div class="kicker">🌌 Aurora Edition · คู่มือภาษาไทย แจกฟรี CC BY 4.0</div>
+      <div class="kicker">🌌 Aurora Edition</div>
       <h1>สร้างผู้ช่วย AI ส่วนตัวบน Discord<br>ฟังเสียง · พูดได้ · สั่งงานได้</h1>
       <p class="sub">เลขา AI ที่อยู่กับคุณ 24 ชม. — พูดสั่งงานได้เหมือนคุยโทรศัพท์ ถอดเสียงไทยในเครื่องตัวเอง พร้อมพิมพ์เขียวให้ AI สร้างให้ทั้งระบบ</p>
       <div class="cta">
