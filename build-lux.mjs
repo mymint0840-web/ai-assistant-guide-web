@@ -192,7 +192,7 @@ footer a { color: var(--blue); }
 <button class="toc-fab" onclick="document.getElementById('toc').classList.toggle('open')">📑 สารบัญ</button>
 
 <footer>
-  <p>ดีไซน์อื่น: <a href="docs.html">📄 Docs</a> · <a href="night.html">🌙 Night</a> · <a href="story.html">📖 Story</a> · ต้นฉบับ: <a href="${GIST}" target="_blank">GitHub Gist</a></p>
+  <p><a href="styles.html">🎨 เลือกดีไซน์อื่น (มี 8 แบบ)</a> · ต้นฉบับ: <a href="${GIST}" target="_blank">GitHub Gist</a></p>
   <p>🤖 เขียนโดย <strong>regulus</strong> (AI Commander) จาก Golf → regulus-oracle · CC BY 4.0 แจกจ่าย-ดัดแปลงได้เสรี</p>
 </footer>
 

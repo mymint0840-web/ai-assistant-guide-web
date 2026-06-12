@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เลือกดีไซน์ — สร้างผู้ช่วย AI ส่วนตัวบน Discord</title>
+<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; }
+body { font-family: 'Anuphan', sans-serif; margin: 0; min-height: 100vh; color: #fff; padding: 60px 24px;
+  background: linear-gradient(160deg, #0c1224 0%, #1c1136 55%, #2e1530 100%); }
+.box { max-width: 880px; margin: 0 auto; text-align: center; }
+h1 { font-size: 2rem; line-height: 1.4; margin: 0 0 6px; }
+p.sub { opacity: .75; margin: 0 0 40px; }
+h2 { font-size: 1.05rem; opacity: .85; margin: 38px 0 14px; text-align: left; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(195px, 1fr)); gap: 14px; }
+a.card { display: block; padding: 24px 16px; border-radius: 18px; text-decoration: none; color: inherit; text-align: center;
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.13); transition: transform .15s, background .15s; }
+a.card:hover { transform: translateY(-4px); background: rgba(255,255,255,.12); }
+a.card.star { border-color: rgba(247,198,107,.55); background: rgba(247,198,107,.08); }
+.emoji { font-size: 2.2rem; }
+.name { font-weight: 800; margin: 8px 0 4px; }
+.desc { font-size: .82rem; opacity: .72; line-height: 1.6; }
+footer { margin-top: 48px; font-size: .8rem; opacity: .6; }
+footer a { color: #9db4ff; }
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>เลือกดีไซน์ที่ชอบ 🎨</h1>
+  <p class="sub">เนื้อหาเหมือนกันทุกแบบ (ฉบับอ่านง่าย + ฉบับเต็ม พร้อมสารบัญกดข้าม) — ต่างกันแค่หน้าตา</p>
+
+  <h2>⭐ ดีไซน์หลัก</h2>
+  <div class="cards">
+    <a class="card star" href="index.html"><div class="emoji">👑</div><div class="name">Flagship</div><div class="desc">ดาร์กพรีเมียม ไล่สีฟ้า-ม่วง-ทอง + แชทเดโม่</div></a>
+    <a class="card" href="aurora.html"><div class="emoji">🌌</div><div class="name">Aurora</div><div class="desc">กระจกฝ้าบนแสงเหนือ เขียวมิ้นต์-ฟ้า-ชมพู</div></a>
+    <a class="card" href="minimal.html"><div class="emoji">🤍</div><div class="name">Minimal</div><div class="desc">ขาวสะอาดสไตล์ Apple โปร่ง อ่านสบายตา</div></a>
+    <a class="card" href="pop.html"><div class="emoji">🎨</div><div class="name">Pop</div><div class="desc">สีจัด ขอบหนา สนุกแบบสติกเกอร์</div></a>
+    <a class="card" href="siam.html"><div class="emoji">🏮</div><div class="name">Siam</div><div class="desc">ครีม-ทอง-น้ำตาล อบอุ่นแบบหนังสือไทย</div></a>
+  </div>
+
+  <h2>รุ่นแรก (เรียบกว่า)</h2>
+  <div class="cards">
+    <a class="card" href="docs.html"><div class="emoji">📄</div><div class="name">Docs</div><div class="desc">เอกสารขาวเรียบ</div></a>
+    <a class="card" href="night.html"><div class="emoji">🌙</div><div class="name">Night</div><div class="desc">โหมดมืดเรียบ</div></a>
+    <a class="card" href="story.html"><div class="emoji">📖</div><div class="name">Story</div><div class="desc">กระดาษอุ่นเรียบ</div></a>
+  </div>
+
+  <footer>ต้นฉบับ: <a href="https://gist.github.com/mymint0840-web/26285feaee428de0f12c0482127a73ff" target="_blank">GitHub Gist</a><br>
+  🤖 เขียนโดย regulus (AI Commander) จาก Golf → regulus-oracle · CC BY 4.0</footer>
+</div>
+</body>
+</html>
