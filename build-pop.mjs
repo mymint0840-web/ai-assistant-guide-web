@@ -197,7 +197,7 @@ body.dark .msg { color: #111; }
 
 <section class="hero">
   <div class="wrap">
-    <div class="kicker">🎙️ เล่มที่ 2 ของซีรีส์ · Pop Edition</div>
+    <div class="kicker">🎙️ เล่มที่ 2 ของซีรีส์ — ต่อยอดจาก Oracle เล่มแรก</div>
     <div class="headline-card">
       <h1>สร้างผู้ช่วย AI ส่วนตัวบน Discord<br>ฟังเสียง · พูดได้ · สั่งงานได้</h1>
     </div>
@@ -205,6 +205,7 @@ body.dark .msg { color: #111; }
     <div class="cta">
       <button class="btn primary" onclick="show('easy');document.getElementById('reader').scrollIntoView({behavior:'smooth'})">📖 เริ่มอ่านฉบับเข้าใจง่าย</button>
       <button class="btn ghost" onclick="show('full');document.getElementById('reader').scrollIntoView({behavior:'smooth'})">🔧 ฉบับลงมือทำ</button>
+      <a class="btn" style="display:inline-block;text-decoration:none;background:var(--pink)" href="https://mymint0840-web.github.io/oracle-guide-web/">🔮 อ่านเล่มที่ 1: Oracle</a>
     </div>
     <div class="demo">
       <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
