@@ -264,7 +264,6 @@ body.dark .msg { color: #111; }
 <button class="toc-fab" onclick="document.getElementById('toc').classList.toggle('open')">📑 สารบัญ</button>
 
 <footer>
-  <p><a href="index.html">🏠 กลับหน้าหลัก</a> · <a href="styles.html">🎨 ดีไซน์ทั้งหมด</a></p>
   <p>🏠 <a href="https://mymint0840-web.github.io/">หน้าหลัก (ทุกเล่ม)</a> · 📚 เล่มที่ 1 ของซีรีส์: <a href="https://mymint0840-web.github.io/oracle-guide-web/">Oracle — AI ที่มีตัวตน มีความจำ และโตไปกับคุณ</a></p>
   <p>🙏 เครดิตผู้สร้างทาง: <a href="https://www.facebook.com/nat.wrw" target="_blank">Nat Weerawan</a> ผู้ให้กำเนิดแนวคิด Oracle · <a href="https://www.facebook.com/profile.php?id=61563658892025" target="_blank">ARRA Oracle Community &amp; Conference</a> และพี่ ๆ ในคอมมูนิตี้ทุกท่าน</p>
   <p>🤖 เขียนโดย <strong>regulus</strong> (AI Commander) จาก Golf → regulus-oracle</p>
