@@ -15,7 +15,7 @@
         │
         ▼
 [หู] บอทนั่งอยู่ในห้องเสียง รับเสียงแยกรายคน
-        │  (ตัดท่อนเมื่อเงียบ 0.3 วิ + รวมท่อนที่พูดต่อเนื่องเป็นประโยคเดียว)
+        │  (ตัดท่อนเมื่อเงียบ 0.7 วิ + รวมท่อนที่พูดต่อเนื่องเป็นประโยคเดียว)
         ▼
 [ถอดเสียง] Whisper รันในเครื่องคุณเอง (เสียงไม่ออกไปไหน)
         │
@@ -190,9 +190,9 @@ const connection = joinVoiceChannel({
   selfMute: false,   // ปากเปิด (ไว้พูดตอบ)
 })
 
-// ── จับเสียงรายคน — ตัดเมื่อเงียบ 0.3 วิ ──
+// ── จับเสียงรายคน — ตัดเมื่อเงียบ 0.7 วิ ──
 const opusStream = connection.receiver.subscribe(userId, {
-  end: { behavior: EndBehaviorType.AfterSilence, duration: 300 },
+  end: { behavior: EndBehaviorType.AfterSilence, duration: 700 },
 })
 // opus → PCM → ffmpeg (ดันเสียงเบา+ตัด noise) → WAV 16kHz mono → whisper
 
@@ -325,8 +325,8 @@ if (!msg.mentions.has(client.user)) return
 
 | ค่า | เราใช้ | ความหมาย | จูนยังไง |
 |---|---|---|---|
-| `SILENCE_MS` | 300 | เงียบกี่ ms ถือว่าจบท่อน | พูดมีจังหวะคิดเยอะ → เพิ่ม / อยากไวสุด → ลด |
-| `MERGE_MS` | 300–1000 | รอท่อนถัดไปก่อนตอบ | ข้อความชอบขาดเป็น 2 ก้อน → เพิ่ม |
+| `SILENCE_MS` | **700** | เงียบกี่ ms ถือว่าจบท่อน | ⚠️ ต่ำกว่า ~0.5 วิจะ**หั่นกลางคำ** ทำให้ถอดเพี้ยน (เราลอง 0.3 แล้วเจ็บมาแล้ว) — อยากไวให้ลดอย่างระวัง |
+| `MERGE_MS` | **800** | รอท่อนถัดไปก่อนตอบ | ข้อความชอบขาดเป็น 2 ก้อน → เพิ่ม |
 | whisper model | large-v3-turbo | สมดุลเร็ว/แม่น | เครื่องแรง+เน้นแม่น → large-v3 เต็ม / เครื่องเบา → medium |
 | whisper flags | `-bs 5 --max-context 0 --vad` | กันหลอน+แม่นขึ้น | เริ่มจากชุดนี้ก่อน |
 | เสียงพูด | th-TH-NiwatNeural | ชายไทยธรรมชาติ | หญิง: Premwadee / สลับได้ runtime |
@@ -354,13 +354,13 @@ if (!msg.mentions.has(client.user)) return
 สิ่งที่ต้องสร้าง (โฟลเดอร์ ~/my-assistant/voice):
 1. listen-voice.mjs — discord.js + @discordjs/voice@^0.19 + @snazzah/davey + @discordjs/opus + prism-media
    - เข้าห้องเสียง (selfDeaf:false, selfMute:false) แล้วอยู่ถาวร
-   - รับเสียงรายคน: subscribe ด้วย EndBehaviorType.AfterSilence duration จาก env SILENCE_MS (default 300)
+   - รับเสียงรายคน: subscribe ด้วย EndBehaviorType.AfterSilence duration จาก env SILENCE_MS (default 700 — ต่ำกว่านี้เสี่ยงหั่นกลางคำ)
    - opus→PCM 48k stereo→เขียนไฟล์ →ffmpeg แปลง 16kHz mono พร้อม filter "highpass=f=70,loudnorm=I=-16:TP=-1.5:LRA=11"
    - ข้ามคลิปสั้นกว่า 0.6 วิ
    - ถอดเสียงด้วย whisper-cli: -m ~/models/whisper/ggml-large-v3-turbo.bin -l th --no-timestamps -bs 5 --max-context 0 --vad --vad-model ~/models/whisper/ggml-silero-v5.1.2.bin
    - ตัวกรองขยะ: ถ้าคำเดียวซ้ำติดกัน ≥4 ครั้ง หรือคำไม่ซ้ำ <40% → ทิ้ง
    - ตัวรวมท่อน: เก็บ buffer ต่อ user, นับงานที่กำลังอัด/ถอดอยู่ (inflight นับตั้งแต่เริ่มอัด),
-     flush เมื่อ inflight=0 และไม่มีข้อความใหม่มานาน MERGE_MS (env, default 1000)
+     flush เมื่อ inflight=0 และไม่มีข้อความใหม่มานาน MERGE_MS (env, default 800)
      แล้วค่อยโพสต์ "🎙️ ได้ยิน <ชื่อ>: <ข้อความรวม>" ลงห้องแชท + ส่งให้สมองเร็ว
    - สมองเร็ว: เรียก `claude -p "<persona+history+ข้อความ>" --model claude-haiku-4-5 --tools ""`
      persona: ตอบไทยสั้น 1-3 ประโยค / คุณไม่มีมือ ทำอะไรเองไม่ได้ / ห้ามอ้างว่าทำแล้ว-เปิดแล้ว-แก้แล้วเด็ดขาด /
@@ -417,8 +417,8 @@ VOICE_CHANNEL_ID=xxx
 TEXT_CHANNEL_ID=xxx
 
 # ── หู ──
-SILENCE_MS=300                 # เงียบกี่ ms = จบท่อน
-MERGE_MS=1000                  # รอรวมท่อนก่อนตอบ
+SILENCE_MS=700                 # เงียบกี่ ms = จบท่อน (ต่ำกว่า ~500 จะหั่นกลางคำ ถอดเพี้ยน)
+MERGE_MS=800                   # รอรวมท่อนก่อนตอบ
 WHISPER_MODEL=$HOME/models/whisper/ggml-large-v3-turbo.bin
 
 # ── สมอง ──
