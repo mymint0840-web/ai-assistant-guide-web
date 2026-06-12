@@ -44,7 +44,7 @@ function page({ title, css, font, badge }) {
   <article id="full" style="display:none">${full}</article>
 </main>
 <footer class="wrap">
-  <p>🤖 เขียนโดย <strong>regulus</strong> (AI Commander) จาก Golf → regulus-oracle · CC BY 4.0 แจกจ่าย-ดัดแปลงได้เสรี</p>
+  <p>🤖 เขียนโดย <strong>regulus</strong> (AI Commander) จาก Golf → regulus-oracle</p>
 </footer>
 <script>${switcherJs}</script>
 </body>
@@ -128,45 +128,4 @@ writeFileSync('docs.html', page({ title: 'สไตล์เอกสาร', cs
 writeFileSync('night.html', page({ title: 'สไตล์ Night', css: nightCss, font: 'Noto+Sans+Thai:wght@400;600;700', badge: '🌙 Night Edition' }))
 writeFileSync('story.html', page({ title: 'สไตล์เล่าเรื่อง', css: storyCss, font: 'Mitr:wght@300;400;600', badge: '📖 Story Edition' }))
 
-// ── Index chooser ──
-writeFileSync('index.html', `<!DOCTYPE html>
-<html lang="th">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>สร้างผู้ช่วย AI ส่วนตัวบน Discord — เลือกสไตล์การอ่าน</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;800&display=swap" rel="stylesheet">
-<style>
-* { box-sizing: border-box; }
-body { font-family: 'Noto Sans Thai', sans-serif; margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(160deg, #10162b 0%, #251238 60%, #3b1a2e 100%); color: #fff; padding: 24px; }
-.box { max-width: 720px; text-align: center; }
-h1 { font-size: 2rem; line-height: 1.4; margin: 0 0 8px; }
-p.sub { opacity: .8; margin: 0 0 36px; }
-.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
-a.card { display: block; padding: 28px 18px; border-radius: 18px; text-decoration: none; color: inherit;
-  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); transition: transform .15s, background .15s; }
-a.card:hover { transform: translateY(-4px); background: rgba(255,255,255,.13); }
-.emoji { font-size: 2.4rem; }
-.name { font-weight: 800; font-size: 1.1rem; margin: 10px 0 4px; }
-.desc { font-size: .85rem; opacity: .75; line-height: 1.6; }
-footer { margin-top: 40px; font-size: .8rem; opacity: .6; }
-footer a { color: #9db4ff; }
-</style>
-</head>
-<body>
-<div class="box">
-  <h1>สร้างผู้ช่วย AI ส่วนตัวบน Discord 🎙️🤖</h1>
-  <p class="sub">ฟังเสียง · พูดได้ · สั่งงานได้ — คู่มือภาษาไทยจากการสร้างจริง · เลือกสไตล์ที่ชอบ</p>
-  <div class="cards">
-    <a class="card" href="docs.html"><div class="emoji">📄</div><div class="name">Docs</div><div class="desc">ขาวสะอาด อ่านสบาย เหมือนเอกสารมืออาชีพ</div></a>
-    <a class="card" href="night.html"><div class="emoji">🌙</div><div class="name">Night</div><div class="desc">โหมดมืดสายเทค ถนอมสายตา อ่านตอนดึก</div></a>
-    <a class="card" href="story.html"><div class="emoji">📖</div><div class="name">Story</div><div class="desc">โทนอุ่นเหมือนหนังสือนิทาน เหมาะกับฉบับอ่านง่าย</div></a>
-  </div>
-  <footer>ทุกสไตล์มีครบทั้ง 2 เวอร์ชัน (อ่านง่าย/ฉบับเต็ม) · <a href="${GIST}" target="_blank">ต้นฉบับบน GitHub Gist</a><br>
-  🤖 เขียนโดย regulus จาก Golf → regulus-oracle · CC BY 4.0</footer>
-</div>
-</body>
-</html>`)
-
-console.log('built: index.html docs.html night.html story.html')
+console.log('built: docs.html night.html story.html')

@@ -193,7 +193,7 @@ footer a { color: var(--blue); }
 
 <footer>
   <p><a href="styles.html">🎨 เลือกดีไซน์อื่น (มี 8 แบบ)</a> · ต้นฉบับ: <a href="${GIST}" target="_blank">GitHub Gist</a></p>
-  <p>🤖 เขียนโดย <strong>regulus</strong> (AI Commander) จาก Golf → regulus-oracle · CC BY 4.0 แจกจ่าย-ดัดแปลงได้เสรี</p>
+  <p>🤖 เขียนโดย <strong>regulus</strong> (AI Commander) จาก Golf → regulus-oracle</p>
 </footer>
 
 <script>

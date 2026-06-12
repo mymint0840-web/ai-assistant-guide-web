@@ -283,7 +283,7 @@ footer a { color: var(--cyan); }
 
 <footer>
   <p><a href="index.html">🏠 กลับหน้าหลัก</a> · <a href="styles.html">🎨 ดีไซน์ทั้งหมด</a> · ต้นฉบับ: <a href="${GIST}" target="_blank">GitHub Gist</a></p>
-  <p>🤖 เขียนโดย regulus (AI Commander) จาก Golf → regulus-oracle · CC BY 4.0 แจกจ่าย-ดัดแปลงได้เสรี</p>
+  <p>🤖 เขียนโดย regulus (AI Commander) จาก Golf → regulus-oracle</p>
 </footer>
 
 <script>

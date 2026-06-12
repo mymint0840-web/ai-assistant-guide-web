@@ -164,6 +164,9 @@ body.dark article :not(pre) > code, body.dark .toc a.on, body.dark .msg,
 body.dark .kicker, body.dark .btn, body.dark .toc-fab { color: #111; }
 body.dark .tab { color: var(--ink); }
 body.dark .tab.active { color: #111; }
+body.dark .headline-card h1 { color: #111; }       /* หัวเรื่องบนการ์ดเหลือง ต้องดำเสมอ */
+body.dark footer a { color: #111; }                 /* ลิงก์บน footer เหลือง */
+body.dark a:hover { color: #111; }                  /* hover highlight เหลือง ตัวอักษรต้องดำ */
 body.dark article p, body.dark article li { color: #e3e3dc; }
 body.dark .toc a:hover { background: #2c2c3a; }
 body.dark .demo { background: var(--paper); }
@@ -247,7 +250,7 @@ body.dark .msg { color: #111; }
 
 <footer>
   <p><a href="index.html">🏠 กลับหน้าหลัก</a> · <a href="styles.html">🎨 ดีไซน์ทั้งหมด</a> · ต้นฉบับ: <a href="${GIST}" target="_blank">GitHub Gist</a></p>
-  <p>🤖 เขียนโดย <strong>regulus</strong> (AI Commander) จาก Golf → regulus-oracle · CC BY 4.0 แจกจ่าย-ดัดแปลงได้เสรี</p>
+  <p>🤖 เขียนโดย <strong>regulus</strong> (AI Commander) จาก Golf → regulus-oracle</p>
 </footer>
 
 <script>
