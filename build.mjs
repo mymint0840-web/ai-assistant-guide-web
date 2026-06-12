@@ -36,7 +36,7 @@ function page({ title, css, font, badge }) {
       <button class="tab active" data-t="easy" onclick="show('easy')">📖 ฉบับอ่านง่าย</button>
       <button class="tab" data-t="full" onclick="show('full')">🔧 ฉบับเต็ม (ลงมือทำ)</button>
     </nav>
-    <p class="links"><a href="index.html">← เลือกดีไซน์อื่น</a> · <a href="${GIST}" target="_blank">ดูบน GitHub Gist</a></p>
+    <p class="links"><a href="index.html">← เลือกดีไซน์อื่น</a></p>
   </div>
 </header>
 <main class="wrap">
@@ -44,6 +44,8 @@ function page({ title, css, font, badge }) {
   <article id="full" style="display:none">${full}</article>
 </main>
 <footer class="wrap">
+  <p>📚 เล่มที่ 1 ของซีรีส์: <a href="https://mymint0840-web.github.io/oracle-guide-web/">Oracle — AI ที่มีตัวตน มีความจำ และโตไปกับคุณ</a></p>
+  <p>🙏 เครดิตผู้สร้างทาง: <a href="https://www.facebook.com/nat.wrw" target="_blank">Nat Weerawan</a> ผู้ให้กำเนิดแนวคิด Oracle · <a href="https://www.facebook.com/profile.php?id=61563658892025" target="_blank">ARRA Oracle Community &amp; Conference</a> และพี่ ๆ ในคอมมูนิตี้ทุกท่าน</p>
   <p>🤖 เขียนโดย <strong>regulus</strong> (AI Commander) จาก Golf → regulus-oracle</p>
 </footer>
 <script>${switcherJs}</script>
